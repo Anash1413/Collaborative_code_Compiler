@@ -54,12 +54,13 @@ app.post("/api/runcode", async (req, res, next) => {
         .status(408)
         .json({ error: "Execution timed out while waiting in queue." });
     }
-
+   console.log(result)
     return res.json({
       status: result.status.description,
       statusId: result.status.id,
       stdout: decode64(result.stdout),
       stderr: decode64(result.stderr),
+      post_execution_filesystem: decode64(result.stderr),
       compile_output: decode64(result.compile_output),
       time: result.time,
       memory: result.memory,
