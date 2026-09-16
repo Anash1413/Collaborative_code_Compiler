@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+/* Remote Selection styling */
+.yRemoteSelection {
+  position: absolute;
+}
+
+/* Remote Cursor Head (the blinking line) */
+.yRemoteSelectionHead {
+  position: absolute;
+  border-left: 2px solid;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Remote User Name Tooltip */
+.yRemoteSelectionHead::after {
+  position: absolute;
+  top: -1.4em;
+  left: -2px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: sans-serif;
+  font-weight: bold;
+  color: #111;
+  border-radius: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}

@@ -1,11 +1,14 @@
 import { SUPPORTED_LANGUAGES } from "./constraints/languages"
 import { useState } from "react"
 import axios from 'axios'
-import Editor from '@monaco-editor/react'
+import MonacoEditor from "./components/MonacoEditor"
 
 function App() {
+  const [roomId, setroomId] = useState('example-room')
+  const [username, setusername] = useState(`Dev_${Math.floor(Math.random() * 1000)}`)
+  const [joined, setjoined] = useState(false)
+
   const [selectedLang, setSelectedLang] = useState(SUPPORTED_LANGUAGES[0])
-  const [code, setCode] = useState(selectedLang.defaultCode)
   const [stdin, setStdin] = useState('')
   const [stdout, setStdout] = useState(null)
   const [loading, setloading] = useState(false)
@@ -13,12 +16,17 @@ function App() {
   function handleLanguageChange(e) {
     const lang = SUPPORTED_LANGUAGES.find((l) => l.id === parseInt(e.target.value))
     setSelectedLang(lang)
-    setCode(lang.defaultCode)
     setStdout(null)
   }
 
   const handleCodeRun = async () => {
+    const editor = window.monaco?.editor.getModels()[0]
+    const code = editor ? editor.getValue() : ''
+    if(!code.trim()){
+      setStdout({stderr: "Editor is empty "})
+    }
     setloading(true)
+    setStdout(null)
     try {
       const res = await axios.post(`/api/runcode`, {
         lang_Id: selectedLang.id,
@@ -33,26 +41,100 @@ function App() {
     }
   }
 
+  if(!joined){
+    return (
+      <div className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex items-center justify-center p-4 font-sans antialiased relative overflow-hidden">
+        {/* Subtle background glow effects */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="bg-zinc-900/90 border border-zinc-800 backdrop-blur-xl p-8 rounded-2xl shadow-2xl max-w-md w-full flex flex-col gap-6 relative z-10">
+          <div className="flex flex-col gap-1.5 text-center">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+              Collaborative Code Compiler
+            </h1>
+            <p className="text-sm text-zinc-400">
+              Enter your details to join or create a live pair-programming room.
+            </p>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (username.trim() && roomId.trim()) {
+                setjoined(true)
+              }
+            }}
+            className="flex flex-col gap-5"
+          >
+            <div className="flex flex-col gap-2 text-left">
+              <label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                Your Display Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={username}
+                onChange={(e) => setusername(e.target.value)}
+                placeholder="e.g. Dev_42"
+                required
+                className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-zinc-600"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 text-left">
+              <label htmlFor="room" className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                Room ID
+              </label>
+              <input
+                id="room"
+                type="text"
+                value={roomId}
+                onChange={(e) => setroomId(e.target.value)}
+                placeholder="e.g. room-alpha"
+                required
+                className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-zinc-600"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="mt-2 w-full py-3 px-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:from-emerald-700 active:to-teal-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-950/50 transition-all cursor-pointer flex items-center justify-center gap-2 text-sm tracking-wide"
+            >
+              Join Session →
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col p-4 md:p-6 gap-4 font-sans antialiased">
       {/* Header / Controls Bar */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <label htmlFor="lang-select" className="text-sm font-medium text-zinc-300">
-            Select a language:
-          </label>
-          <select
-            id="lang-select"
-            value={selectedLang.id}
-            onChange={handleLanguageChange}
-            className="bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent cursor-pointer transition-all"
-          >
-            {SUPPORTED_LANGUAGES.map((lang) => (
-              <option key={lang.id} value={lang.id}>
-                {lang.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-zinc-800/90 border border-zinc-700/80 px-3 py-1.5 rounded-lg text-xs">
+            <span className="text-zinc-400 font-semibold uppercase tracking-wider">Room:</span>
+            <span className="text-emerald-400 font-mono font-bold">{roomId}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="lang-select" className="text-sm font-medium text-zinc-300">
+              Select a language:
+            </label>
+            <select
+              id="lang-select"
+              value={selectedLang.id}
+              onChange={handleLanguageChange}
+              className="bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent cursor-pointer transition-all"
+            >
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.id} value={lang.id}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <button
@@ -67,25 +149,7 @@ function App() {
       {/* Main Grid Content Area */}
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
         {/* Code Editor Panel */}
-        <section className="lg:col-span-7 xl:col-span-8 flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg min-h-[400px]">
-          <div className="bg-zinc-800/80 px-4 py-2 border-b border-zinc-700/60 text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-            <span>Editor ({selectedLang.name})</span>
-          </div>
-          <div className="flex-1 w-full min-h-[350px]">
-            <Editor
-              height="100%"
-              value={code}
-              onChange={(e) => setCode(e || '')}
-              theme="vs-dark"
-              language={selectedLang.monacoLang}
-              options={{
-                fontSize: 14,
-                minimap: { enabled: false },
-                automaticLayout: true
-              }}
-            />
-          </div>
-        </section>
+        <MonacoEditor roomId={roomId} username={username} selectedLang ={selectedLang}/>
 
         {/* Input & Output Section */}
         <section className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">

@@ -4,7 +4,7 @@
   "main": "app.js",
   "author": "maviz ahmad",
   "license": "MIT",
-    "scripts": {
+  "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js"
   },
@@ -12,6 +12,9 @@
     "axios": "^1.20.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "ws": "^8.21.3",
+    "y-websocket": "1.5.4",
+    "yjs": "^13.6.32"
   }
 }

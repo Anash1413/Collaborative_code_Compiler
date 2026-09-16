@@ -1,10 +1,14 @@
-const express = require("express");
-const dotenv = require("dotenv").config();
-const axios = require("axios");
-const cors = require("cors");
-const PORT = process.env.PORT;
+const express = require("express")
+const dotenv = require("dotenv").config()
+const axios = require("axios")
+const cors = require("cors")
+const PORT = process.env.PORT
+const http = require('http')
+const { WebSocketServer } = require('ws')
+// Import the core y-websocket room setup utility
+const { setupWSConnection } = require('y-websocket/bin/utils')
 const JUDGE0_BASE_URL =process.env.JUDGE0_URL
-const app = express();
+const app = express()
 
 app.use(
   cors({
@@ -54,7 +58,7 @@ app.post("/api/runcode", async (req, res, next) => {
         .status(408)
         .json({ error: "Execution timed out while waiting in queue." });
     }
-   console.log(result)
+  //  console.log(result)
     return res.json({
       status: result.status.description,
       statusId: result.status.id,
@@ -78,8 +82,28 @@ app.post("/api/runcode", async (req, res, next) => {
       });
   }
 });
+const server = http.createServer(app)
+//yaha pr websocket server ko http server pr mount kr diya hai
+const wss  = new WebSocketServer({noServer:true})
+ wss.on('connection', ( socket ,request) =>{
+  const docName = request.url.slice(1).split('?')[0]
+  setupWSConnection(socket, request  , {docName})          
+ })
 
-app.listen(PORT, () => {
+ server.on('upgrade',( req , socket,  head)=>{
+    if(req.url.startsWith('/yjs')){
+      req.url =  req.url.replace('/yjs' , '')
+      wss.handleUpgrade(req , socket, head ,(ws)=>{
+      wss.emit('connection' , ws , req)
+
+      })
+    }
+    else {
+      socket.destroy()
+    }
+ })
+
+server.listen(PORT, () => {
   console.log(
     `your node js server is running on http://localhost:${PORT} by Anash Khan`,
   );
