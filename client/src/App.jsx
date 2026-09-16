@@ -3,6 +3,7 @@ import { useState } from "react"
 import axios from 'axios'
 import MonacoEditor from "./components/MonacoEditor"
 import Chat from "./components/Chat"
+import { BASE_URL } from "./config"
 
 function App() {
   const [roomId, setroomId] = useState('example-room')
@@ -32,7 +33,7 @@ function App() {
     setShowStdout(true)
     setStdout(null)
     try {
-      const res = await axios.post(`/api/runcode`, {
+      const res = await axios.post(`${BASE_URL}/api/runcode`, {
         lang_Id: selectedLang.id,
         code: code,
         stdin: stdin

@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { MonacoBinding } from "y-monaco";
+import { WS_URL } from "../config";
 
 // Array of bright colors for remote cursors
 const CURSOR_COLORS = [
@@ -28,8 +29,7 @@ const MonacoEditor = ({ selectedLang, roomId, username }) => {
     editorRef.current = editor
     const doc = new Y.Doc() 
     docRef.current = doc
-    const wsl = 'ws://localhost:5000/yjs'
-    const provider = new WebsocketProvider( wsl , roomId ,doc ,)
+    const provider = new WebsocketProvider( WS_URL , roomId ,doc ,)
     providerRef.current = provider
    //here we'll check for connection status
     provider.on('status' , (e)=>{

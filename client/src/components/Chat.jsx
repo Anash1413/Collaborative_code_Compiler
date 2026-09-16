@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { BASE_URL } from '../config';
 
 const Chat = ({ roomId, username }) => {
   const [message, setmessage] = useState([]);
@@ -16,7 +17,7 @@ const Chat = ({ roomId, username }) => {
   }, [message]);
 
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    const socket = io(BASE_URL);
     socketRef.current = socket;
 
     // joining the room by giving data
@@ -94,7 +95,7 @@ const Chat = ({ roomId, username }) => {
                 {msg.text || msg.inputValue}
               </div>
             </div>
-          );
+          ); 
         })}
         <div ref={messageEndRef} />
       </div>
