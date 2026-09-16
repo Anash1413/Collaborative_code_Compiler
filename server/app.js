@@ -2,17 +2,18 @@ const express = require("express")
 const dotenv = require("dotenv").config()
 const axios = require("axios")
 const cors = require("cors")
-const PORT = process.env.PORT
 const http = require('http')
+const {Server} = require('socket.io')
 const { WebSocketServer } = require('ws')
 // Import the core y-websocket room setup utility
 const { setupWSConnection } = require('y-websocket/bin/utils')
+const PORT = process.env.PORT
 const JUDGE0_BASE_URL =process.env.JUDGE0_URL
 const app = express()
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173" ,"http://localhost:5174" , "https://maviz-compiler.netlify.app"],
   }),
 );
 app.use(express.json());
@@ -81,8 +82,61 @@ app.post("/api/runcode", async (req, res, next) => {
         details: error.response?.data || error.message,
       });
   }
-});
+})
+// legacy http server jo websocket and socket.io and also express server ko handle karega 
+// isse ek baat mind me aayi hogi ki old is pure gold same here 😅😅
 const server = http.createServer(app)
+
+// socket.io setup 
+const io = new Server(server,{
+  cors:{
+    origin:'*',
+    methods:['GET', 'POST']
+  }
+})
+ io.on('connection', (socket) => {
+   console.log('user joined ', socket.id)
+
+   socket.on('join-room', ({ roomId, username }) => {
+     socket.join(roomId)
+     socket.data.username = username
+     socket.data.roomId = roomId
+
+     socket.to(roomId).emit('user-joined', {
+       username,
+       message: `${username} joined the room baby`,
+       system: true,
+       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+     })
+   })
+
+   socket.on('send-message', (messagsedata) => {
+     const { roomId, text, sender } = messagsedata
+     const payload = {
+       id: `${socket.id}-${Date.now()}`,
+       text,
+       sender,
+       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+     }
+     console.log(text)
+     io.to(roomId).emit('recieve-message', payload)
+   })
+
+   socket.on('disconnect', () => {
+     const { roomId, username } = socket.data || {}
+     if (roomId && username) {
+       io.to(roomId).emit('user-left', {
+         username,
+         message: `${username} left the room`,
+         system: true,
+         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+       })
+     }
+   })
+ })
+ 
+// the websockrt setupt and upgrade code
+
 //yaha pr websocket server ko http server pr mount kr diya hai
 const wss  = new WebSocketServer({noServer:true})
  wss.on('connection', ( socket ,request) =>{
@@ -98,9 +152,10 @@ const wss  = new WebSocketServer({noServer:true})
 
       })
     }
-    else {
-      socket.destroy()
-    }
+    // need to comment other wise the socket.io cant be used
+    // else {
+    //   socket.destroy()
+    // }
  })
 
 server.listen(PORT, () => {

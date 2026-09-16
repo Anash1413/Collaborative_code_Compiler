@@ -26,7 +26,7 @@ const MonacoEditor = ({ selectedLang, roomId, username }) => {
 
   const handleEditorDidMount = (editor)=>{
     editorRef.current = editor
-    const doc = new Y.Doc()
+    const doc = new Y.Doc() 
     docRef.current = doc
     const wsl = 'ws://localhost:5000/yjs'
     const provider = new WebsocketProvider( wsl , roomId ,doc ,)
@@ -69,7 +69,7 @@ useEffect(() => {
     };
   }, [roomId])
   return (
-    <section className="lg:col-span-7 xl:col-span-8 flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg h-[600px] lg:h-auto min-h-[450px]">
+    <section className="lg:col-span-7 xl:col-span-8 flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg h-[500px] lg:h-full lg:min-h-0">
       <div className="bg-zinc-800/80 px-4 py-2 border-b border-zinc-700/60 text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center justify-between shrink-0">
         <span>Editor ({selectedLang.name})</span>
         <span className="normal-case font-mono text-[11px] text-zinc-400 bg-zinc-900/60 px-2 py-0.5 rounded border border-zinc-700/50">

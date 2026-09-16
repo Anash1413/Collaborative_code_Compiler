@@ -2,11 +2,14 @@ import { SUPPORTED_LANGUAGES } from "./constraints/languages"
 import { useState } from "react"
 import axios from 'axios'
 import MonacoEditor from "./components/MonacoEditor"
+import Chat from "./components/Chat"
 
 function App() {
   const [roomId, setroomId] = useState('example-room')
   const [username, setusername] = useState(`Dev_${Math.floor(Math.random() * 1000)}`)
   const [joined, setjoined] = useState(false)
+  const [showChat, setShowChat] = useState(true);
+  const [showStdout, setShowStdout] = useState(true);
 
   const [selectedLang, setSelectedLang] = useState(SUPPORTED_LANGUAGES[0])
   const [stdin, setStdin] = useState('')
@@ -26,6 +29,7 @@ function App() {
       setStdout({stderr: "Editor is empty "})
     }
     setloading(true)
+    setShowStdout(true)
     setStdout(null)
     try {
       const res = await axios.post(`/api/runcode`, {
@@ -109,9 +113,9 @@ function App() {
     )
   }
   return (
-    <div className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col p-4 md:p-6 gap-4 font-sans antialiased">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden w-full bg-zinc-950 text-zinc-100 flex flex-col p-4 md:p-6 gap-4 font-sans antialiased">
       {/* Header / Controls Bar */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg shrink-0">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 bg-zinc-800/90 border border-zinc-700/80 px-3 py-1.5 rounded-lg text-xs">
             <span className="text-zinc-400 font-semibold uppercase tracking-wider">Room:</span>
@@ -137,24 +141,40 @@ function App() {
           </div>
         </div>
 
-        <button
-          onClick={handleCodeRun}
-          disabled={loading}
-          className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-        >
-          {loading ? 'Running...' : 'Run Code'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowStdout((prev) => !prev)}
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium rounded-lg shadow-md transition-all cursor-pointer flex items-center gap-2"
+          >
+            {showStdout ? "Hide Output" : "Show Output"}
+          </button>
+
+          <button
+            onClick={() => setShowChat((prev) => !prev)}
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium rounded-lg shadow-md transition-all cursor-pointer flex items-center gap-2"
+          >
+            {showChat ? "Hide Chat" : "Show Chat"}
+          </button>
+
+          <button
+            onClick={handleCodeRun}
+            disabled={loading}
+            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {loading ? 'Running...' : 'Run Code'}
+          </button>
+        </div>
       </header>
 
       {/* Main Grid Content Area */}
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 lg:min-h-0">
         {/* Code Editor Panel */}
         <MonacoEditor roomId={roomId} username={username} selectedLang ={selectedLang}/>
 
         {/* Input & Output Section */}
-        <section className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
+        <section className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 lg:h-full lg:min-h-0">
           {/* Custom Stdin Input */}
-          <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg flex flex-col gap-2">
+          <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg flex flex-col gap-2 shrink-0">
             <label htmlFor="stdin-input" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
               Custom Input (stdin)
             </label>
@@ -169,55 +189,64 @@ function App() {
           </div>
 
           {/* Console / Stdout Output Panel */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-lg flex flex-col flex-1 overflow-hidden min-h-[280px]">
-            <div className="bg-zinc-800/80 px-4 py-2.5 border-b border-zinc-700/60 text-xs font-semibold text-zinc-400 flex items-center justify-between">
-              <span>stdout Console</span>
-              {stdout && stdout.time && (
-                <span className="text-emerald-400 font-mono text-xs">
-                  Time: {stdout.time}s | Mem: {stdout.memory} KB
-                </span>
-              )}
-            </div>
+          {showStdout && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-lg flex flex-col flex-1 min-h-[160px] lg:min-h-0 overflow-hidden">
+              <div className="bg-zinc-800/80 px-4 py-2.5 border-b border-zinc-700/60 text-xs font-semibold text-zinc-400 flex items-center justify-between">
+                <span>stdout Console</span>
+                {stdout && stdout.time && (
+                  <span className="text-emerald-400 font-mono text-xs">
+                    Time: {stdout.time}s | Mem: {stdout.memory} KB
+                  </span>
+                )}
+              </div>
 
-            <div className="p-4 font-mono text-sm overflow-y-auto flex-1 whitespace-pre-wrap leading-relaxed">
-              {loading && (
-                <span className="text-blue-400 animate-pulse font-medium">
-                  Submitting and compiling code...
-                </span>
-              )}
-              {!loading && !stdout && (
-                <span className="text-zinc-500 italic">
-                  Run your code to see the stdout here.
-                </span>
-              )}
-              {stdout && (
-                <>
-                  {stdout.compile_stdout && (
-                    <div className="text-red-500 bg-red-950/40 border border-red-800/60 p-3 rounded-lg mb-3 shadow-inner">
-                      <strong className="text-red-400 font-bold block mb-1">Compilation Error:</strong>
-                      {stdout.compile_stdout}
-                    </div>
-                  )}
-                  {stdout.stderr && (
-                    <div className="text-red-500 bg-red-950/40 border border-red-800/60 p-3 rounded-lg mb-3 shadow-inner">
-                      <strong className="text-red-400 font-bold block mb-1">Runtime Error:</strong>
-                      {stdout.stderr}
-                    </div>
-                  )}
-                  {stdout.stdout && (
-                    <div className="text-emerald-400 bg-zinc-950/60 p-3 rounded-lg border border-zinc-800">
-                      {stdout.stdout}
-                    </div>
-                  )}
-                  {!stdout.stdout && !stdout.stderr && !stdout.compile_stdout && (
-                    <div className="text-zinc-400 bg-zinc-950/40 p-3 rounded-lg border border-zinc-800">
-                      Process finished with status: {stdout.status}
-                    </div>
-                  )}
-                </>
-              )}
+              <div className="p-4 font-mono text-sm overflow-y-auto flex-1 whitespace-pre-wrap leading-relaxed">
+                {loading && (
+                  <span className="text-blue-400 animate-pulse font-medium">
+                    Submitting and compiling code...
+                  </span>
+                )}
+                {!loading && !stdout && (
+                  <span className="text-zinc-500 italic">
+                    Run your code to see the stdout here.
+                  </span>
+                )}
+                {stdout && (
+                  <>
+                    {stdout.compile_stdout && (
+                      <div className="text-red-500 bg-red-950/40 border border-red-800/60 p-3 rounded-lg mb-3 shadow-inner">
+                        <strong className="text-red-400 font-bold block mb-1">Compilation Error:</strong>
+                        {stdout.compile_stdout}
+                      </div>
+                    )}
+                    {stdout.stderr && (
+                      <div className="text-red-500 bg-red-950/40 border border-red-800/60 p-3 rounded-lg mb-3 shadow-inner">
+                        <strong className="text-red-400 font-bold block mb-1">Runtime Error:</strong>
+                        {stdout.stderr}
+                      </div>
+                    )}
+                    {stdout.stdout && (
+                      <div className="text-emerald-400 bg-zinc-950/60 p-3 rounded-lg border border-zinc-800">
+                        {stdout.stdout}
+                      </div>
+                    )}
+                    {!stdout.stdout && !stdout.stderr && !stdout.compile_stdout && (
+                      <div className="text-zinc-400 bg-zinc-950/40 p-3 rounded-lg border border-zinc-800">
+                        Process finished with status: {stdout.status}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Chat Component */}
+          {showChat && (
+            <div className="flex-1 min-h-[260px] lg:min-h-0 overflow-hidden">
+              <Chat roomId={roomId} username={username} />
+            </div>
+          )}
         </section>
       </main>
     </div>
